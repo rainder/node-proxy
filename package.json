@@ -1,0 +1,12 @@
+{
+  "name": "skerla-dynamic-proxy",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node proxy.js"
+  },
+  "dependencies": {
+    "http-proxy": "^1.1.2",
+    "commander": "^2.2.0"
+  }
+}
