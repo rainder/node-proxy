@@ -21,7 +21,7 @@ var sendError = function (res, message) {
 
 //error handler
 proxy.on('error', function (err, req, res) {
-  console.log('Proxy error:', hosts(req.headers.host.split(':')[0]), err);
+  console.log('Proxy error:', hosts(req), err);
   sendError(res, 'That\'s a pretty fookin bad gateway!');
 });
 
@@ -29,7 +29,7 @@ proxy.on('error', function (err, req, res) {
 var server = http.createServer(function (req, res) {
   var target;
 
-  if (target = hosts(req.headers.host.split(':')[0])) {
+  if (target = hosts(req)) {
     return proxy.web(req, res, { target: target });
   }
 
@@ -38,7 +38,7 @@ var server = http.createServer(function (req, res) {
 
 //enable support for WebSockets
 server.on('upgrade', function (req, socket, head) {
-  proxy.ws(req, socket, head, { target: hosts(req.headers.host.split(':')[0]) });
+  proxy.ws(req, socket, head, { target: hosts(req) });
 });
 
 //start the server
