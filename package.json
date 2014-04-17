@@ -1,12 +1,25 @@
 {
   "name": "skerla-dynamic-proxy",
-  "version": "0.0.1",
-  "private": true,
+  "version": "0.0.2",
   "scripts": {
     "start": "node proxy.js"
   },
   "dependencies": {
     "http-proxy": "^1.1.2",
     "commander": "^2.2.0"
-  }
+  },
+  "description": "Simple dynamic proxy server",
+  "main": "proxy.js",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@bes.skerla.com:55800/proxy"
+  },
+  "keywords": [
+    "dynamic",
+    "proxy",
+    "server"
+  ],
+  "author": "Andrius Skerla",
+  "license": "ISC"
 }

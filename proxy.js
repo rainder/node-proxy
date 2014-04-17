@@ -2,56 +2,46 @@ var http = require('http');
 var httpProxy = require('http-proxy');
 var hosts = require('./lib/hosts');
 var commander = require('commander');
+var package = require(__dirname + '/package.json');
 
+//define command line parameters
 commander
-  .version('0.0.1')
+  .version(package.version)
   .option('-p, --port <n>', 'Port to listen to', 80)
   .parse(process.argv);
 
-var proxy = httpProxy.createProxyServer({
-  ws: true,
-  xfwd: true
-});
+//instantiate the proxy server
+var proxy = httpProxy.createProxyServer({ ws: true, xfwd: true });
 
+//define error function
+var sendError = function (res, message) {
+  res.writeHead(500, { 'Content-Type': 'text/plain' });
+  res.end(message);
+};
 
+//error handler
 proxy.on('error', function (err, req, res) {
-  var target = hosts(req.headers.host.split(':')[0]);
-
-  res.writeHead(500, {
-    'Content-Type': 'text/plain'
-  });
-
-  console.log('Proxy error', err, target);
-  res.end('That\'s a pretty fookin bad gateway!');
+  console.log('Proxy error:', hosts(req.headers.host.split(':')[0]), err);
+  sendError(res, 'That\'s a pretty fookin bad gateway!');
 });
 
+//simple Dynamic HTTP Proxy
 var server = http.createServer(function (req, res) {
-  var target = hosts(req.headers.host.split(':')[0]);
+  var target;
 
-  if (target) {
-    proxy.web(req, res, {
-      target: target
-    });
-  } else {
-    res.statusCode = 500;
-    res.end('Oooopsy... The host was not found.');
+  if (target = hosts(req.headers.host.split(':')[0])) {
+    return proxy.web(req, res, { target: target });
   }
 
+  sendError(res, 'Oooopsy... The host was not found.');
 });
 
+//enable support for WebSockets
 server.on('upgrade', function (req, socket, head) {
-  var target = hosts(req.headers.host.split(':')[0]);
-
-  if (target) {
-    proxy.ws(req, socket, head, {
-      target: target
-    });
-  } else {
-    socket.write('Oooopsy... The host was not found.');
-    socket.end()
-  }
+  proxy.ws(req, socket, head, { target: hosts(req.headers.host.split(':')[0]) });
 });
 
+//start the server
 server.listen(commander.port, function () {
   console.log('Proxy server is listening on ' + commander.port);
 });
