@@ -2,11 +2,19 @@ var http = require('http');
 var httpProxy = require('http-proxy');
 var hosts = require('./lib/hosts');
 var commander = require('commander');
-var package = require(__dirname + '/package.json');
+var Debug = require('debug');
+var packageJson = require(__dirname + '/package.json');
+var bunyan = require('bunyan');
+var log = bunyan.createLogger({
+  name: 'proxy',
+  serializers: {
+    req: bunyan.stdSerializers.req
+  }
+});
 
 //define command line parameters
 commander
-  .version(package.version)
+  .version(packageJson.version)
   .option('-p, --port <n>', 'Port to listen to', 80)
   .parse(process.argv);
 
@@ -21,7 +29,7 @@ var sendError = function (res, message) {
 
 //error handler
 proxy.on('error', function (err, req, res) {
-  console.log('Proxy error:', hosts(req), err);
+  log.error('Proxy error:', hosts(req), err);
   sendError(res, 'That\'s a pretty fookin bad gateway!');
 });
 
@@ -30,9 +38,11 @@ var server = http.createServer(function (req, res) {
   var target;
 
   if (target = hosts(req)) {
+    log.info({req: req});
     return proxy.web(req, res, { target: target });
   }
 
+  log.error('Host not found');
   sendError(res, 'Oooopsy... The host was not found.');
 });
 
@@ -43,5 +53,5 @@ server.on('upgrade', function (req, socket, head) {
 
 //start the server
 server.listen(commander.port, function () {
-  console.log('Proxy server is listening on ' + commander.port);
+  log.info('Proxy server is listening on ' + commander.port)
 });
